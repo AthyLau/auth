@@ -41,6 +41,19 @@ public class AuthService {
 
     private AbstractAuth authenticator;
 
+    static {
+        defaultUser = new HashMap<String, Object>() {{
+            put(ConstAuth.USERNAME, "aiops");
+            put(ConstAuth.PASSWORD, "aiops");
+            put(ConstAuth.ROLE, AuthRoleType.SUPER_ADMIN.getName());
+        }};
+        rolenames = new ArrayList<String>() {{
+            for (AuthRoleType role : AuthRoleType.values()) {
+                add(role.getName());
+            }
+        }};
+    }
+
     /**
      * 根据配置文件的信息刷新Authenticator（目前在config里写死了self）
      *
@@ -57,19 +70,6 @@ public class AuthService {
         return false;
     }
 
-    static {
-        defaultUser = new HashMap<String, Object>() {{
-            put(ConstAuth.USERNAME, "aiops");
-            put(ConstAuth.PASSWORD, "aiops");
-            put(ConstAuth.ROLE, AuthRoleType.SUPER_ADMIN.getName());
-        }};
-        rolenames = new ArrayList<String>() {{
-            for (AuthRoleType role : AuthRoleType.values()) {
-                add(role.getName());
-            }
-        }};
-    }
-
     public boolean inspectionAuth(String... roles) {
         for (String role : roles) {
             if (!AuthService.rolenames.contains(role)) {
@@ -79,24 +79,30 @@ public class AuthService {
         return true;
     }
 
-    public boolean login(Map<String, Object> user) {
-        if (user == null || user.isEmpty()) {
-            return false;
+    public Map<String, Object> login(Map<String, Object> user) {
+        if (user == null) {
+            throw new AuthException("login user can't be null");
         }
         String username = (String) user.getOrDefault(ConstAuth.USERNAME, "");
         String passowrd = (String) user.getOrDefault(ConstAuth.PASSWORD, "");
         String role = (String) user.getOrDefault(ConstAuth.ROLE, "");
-        if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(passowrd) || Strings.isNullOrEmpty(role)) {
-            return false;
+        if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(passowrd)) {
+            throw new AuthException("username and password can't be null");
         }
-        if (!inspectionAuth(role)) {
-            return false;
+        if (role != null && !inspectionAuth(role)) {
+            throw new AuthException("role is wrong");
         }
-        return false;
+        Map<String, Object> userInDB = authRepository.getUser(username);
+        String passwordSha = (String) userInDB.getOrDefault(ConstAuth.PASSWORD_SHA, "");
+        if (passwordSha.equals(AuthRepository.getShaString(passowrd))) {
+            return JWTHelper.getLoginResponse(username);
+        } else {
+            return null;
+        }
     }
 
     /**
-     * 注册 todo 接口
+     * 注册
      *
      * @param jwtHeader
      * @param body

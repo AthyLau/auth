@@ -46,7 +46,7 @@ public class AuthRepository {
         documentDBHelper.getDocDB().insert(ConstTableNames.USER_TABLE,user);
     }
 
-    private static String getShaString(String src) {
+    public static String getShaString(String src) {
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-256");
