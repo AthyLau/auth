@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @ConditionalOnProperty(name = "security.auth.enable", havingValue = "true")
-public class AuthController {
+public class AuthController extends AutoLogController{
 
 
 

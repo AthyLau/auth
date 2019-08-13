@@ -8,9 +8,11 @@ package com.bizseer.auth.util.exception;
  * @since JDK 1.8
  */
 public class UnauthorizedException extends AuthException {
+
     public UnauthorizedException() {
         super("The user has not been authenticated!");
     }
+
     public UnauthorizedException(String message) {
         super(message);
     }

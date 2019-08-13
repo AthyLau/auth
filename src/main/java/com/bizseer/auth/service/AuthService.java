@@ -8,8 +8,8 @@ import com.bizseer.auth.repository.AuthRepository;
 import com.bizseer.auth.util.authenticator.AbstractAuth;
 import com.bizseer.auth.util.authenticator.AuthFactory;
 import com.bizseer.auth.util.exception.AuthException;
+import com.bizseer.auth.util.exception.UserExistException;
 import com.bizseer.auth.util.exception.UserKeyNotFoundException;
-import com.bizseer.auth.util.exception.UseExistException;
 import com.bizseer.auth.util.exception.UserRoleException;
 import com.bizseer.auth.util.jwt.JWTHelper;
 import com.google.common.base.Strings;
@@ -28,11 +28,11 @@ import java.util.Map;
  * Date: 2019/8/7 10:47 AM
  * @since JDK 1.8
  */
-@Service("AuthService")
+@Service
 public class AuthService {
 
     private static List<String> rolenames;
-    private static Map<String,Object> defaultUser;
+    private static Map<String, Object> defaultUser;
     @Autowired
     private AuthRepository authRepository;
     private AuthType authType = AuthType.NONE;
@@ -40,6 +40,7 @@ public class AuthService {
     private AuthFactory authFactory;
 
     private AbstractAuth authenticator;
+
     /**
      * 根据配置文件的信息刷新Authenticator（目前在config里写死了self）
      *
@@ -55,34 +56,53 @@ public class AuthService {
         }
         return false;
     }
+
     static {
-        defaultUser = new HashMap<String,Object>(){{
-           put(ConstAuth.USERNAME,"aiops");
-           put(ConstAuth.PASSWORD,"aiops");
-           put(ConstAuth.ROLE,AuthRoleType.SUPER_ADMIN.getName());
+        defaultUser = new HashMap<String, Object>() {{
+            put(ConstAuth.USERNAME, "aiops");
+            put(ConstAuth.PASSWORD, "aiops");
+            put(ConstAuth.ROLE, AuthRoleType.SUPER_ADMIN.getName());
         }};
-        rolenames = new ArrayList<String>(){{
-            for(AuthRoleType role:AuthRoleType.values()){
+        rolenames = new ArrayList<String>() {{
+            for (AuthRoleType role : AuthRoleType.values()) {
                 add(role.getName());
             }
         }};
     }
 
-    public boolean inspectionAuth(String...roles){
-        for(String role:roles){
-            if(!AuthService.rolenames.contains(role)){
+    public boolean inspectionAuth(String... roles) {
+        for (String role : roles) {
+            if (!AuthService.rolenames.contains(role)) {
                 return false;
             }
         }
         return true;
     }
+
+    public boolean login(Map<String, Object> user) {
+        if (user == null || user.isEmpty()) {
+            return false;
+        }
+        String username = (String) user.getOrDefault(ConstAuth.USERNAME, "");
+        String passowrd = (String) user.getOrDefault(ConstAuth.PASSWORD, "");
+        String role = (String) user.getOrDefault(ConstAuth.ROLE, "");
+        if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(passowrd) || Strings.isNullOrEmpty(role)) {
+            return false;
+        }
+        if (!inspectionAuth(role)) {
+            return false;
+        }
+        return false;
+    }
+
     /**
      * 注册 todo 接口
+     *
      * @param jwtHeader
      * @param body
      * @return
      */
-    public boolean register(String jwtHeader,Map<String,String> body) {
+    public boolean register(String jwtHeader, Map<String, String> body) throws AuthException {
         String loginUserName = JWTHelper.parseUsernameFromToken(jwtHeader);
         if (!Strings.isNullOrEmpty(loginUserName) && isUserExist(loginUserName)) {
             Integer power = getPowerByUsername(loginUserName);
@@ -100,45 +120,46 @@ public class AuthService {
         return power != null && power != 10 && register(username, passowrd, role);
     }
 
-    public boolean register(String username,String password,String role){
+    public boolean register(String username, String password, String role) throws AuthException {
         //角色不存在
-        if(!inspectionAuth(role)){
+        if (!inspectionAuth(role)) {
             throw new UserRoleException("The user role is not exist!");
         }
         //用户已经存在
-        if(isUserExist(username)){
-            throw new UseExistException("The user is not exist!");
+        if (isUserExist(username)) {
+            throw new UserExistException("The user is not exist!");
         }
-        authRepository.register(username,password,role);
+        authRepository.register(username, password, role);
         return true;
     }
 
-    public boolean isUserExist(String username){
-       Map<String,Object> user = authRepository.getUser(username);
+
+    public boolean isUserExist(String username) {
+        Map<String, Object> user = authRepository.getUser(username);
         return user != null;
     }
 
-    public Integer getPowerByUsername(String username){
-        String role = (String) getUserOneInfoByUsername(ConstAuth.ROLE,username);
+    public Integer getPowerByUsername(String username) {
+        String role = (String) getUserOneInfoByUsername(ConstAuth.ROLE, username);
         return getPowerByRole(role);
     }
 
-    public Integer getPowerByRole(String role){
+    public Integer getPowerByRole(String role) {
         AuthRoleType authRoleType = AuthRoleType.getAuthRoleByName(role);
-        if(authRoleType!=null){
+        if (authRoleType != null) {
             return authRoleType.getPower();
         }
         return null;
     }
 
     //这边可以用原型模式来设计
-    public Object getUserOneInfoByUsername(String infoName,String username){
-        if(!defaultUser.containsKey(infoName)){
-            throw new UserKeyNotFoundException(infoName+" key is not exist！");
+    public Object getUserOneInfoByUsername(String infoName, String username) throws AuthException {
+        if (!defaultUser.containsKey(infoName)) {
+            throw new UserKeyNotFoundException(infoName + " key is not exist！");
         }
-        Map<String,Object> user = authRepository.getUser(username);
-        if(user!=null){
-            return user.getOrDefault(infoName,null);
+        Map<String, Object> user = authRepository.getUser(username);
+        if (user != null) {
+            return user.getOrDefault(infoName, null);
         }
         return null;
     }

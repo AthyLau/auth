@@ -16,4 +16,5 @@ public class Config {
     public String mongoDB = "auth";
 
     public AuthType authType = AuthType.SELF;
+
 }

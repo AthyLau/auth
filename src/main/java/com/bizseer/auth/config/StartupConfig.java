@@ -1,6 +1,7 @@
 package com.bizseer.auth.config;
 
 import com.bizseer.auth.service.AuthService;
+import com.bizseer.auth.util.exception.AuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +16,10 @@ import org.springframework.core.annotation.Order;
 @Order(1)
 @Slf4j
 public class StartupConfig implements CommandLineRunner {
+
     @Autowired
     private AuthService loginService;
+
     @Autowired
     private Config config;
 

@@ -7,11 +7,13 @@ package com.bizseer.auth.util.exception;
  * Date: 2019/8/7 4:10 PM
  * @since JDK 1.8
  */
-public class UseExistException extends AuthException {
-    public UseExistException() {
+public class UserExistException extends AuthException {
+
+    public UserExistException() {
         super("The user exists exception!");
     }
-    public UseExistException(String message) {
+
+    public UserExistException(String message) {
         super(message);
     }
 }

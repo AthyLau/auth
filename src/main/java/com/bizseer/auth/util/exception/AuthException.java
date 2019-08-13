@@ -7,8 +7,10 @@ package com.bizseer.auth.util.exception;
  * Date: 2019/8/7 10:56 AM
  * @since JDK 1.8
  */
-public class AuthException extends RuntimeException{
+public class AuthException extends RuntimeException {
+
     public AuthException(String message) {
         super(message);
     }
+
 }
