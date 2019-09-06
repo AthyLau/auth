@@ -3,8 +3,11 @@ package com.bizseer.auth.controller;
 import com.bizseer.auth.service.AuthService;
 import com.bizseer.auth.util.exception.AuthException;
 import com.bizseer.auth.util.http.JsonResponse;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,13 +22,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @ConditionalOnProperty(name = "security.auth.enable", havingValue = "true")
+@ApiModel(description = "AuthModule")
 public class AuthController extends AutoLogController{
 
     @Autowired
     private AuthService authService;
 
     @PostMapping("/login")
-    public JsonResponse login(@RequestBody Map<String,Object> loginUser)throws AuthException {
+    public JsonResponse login(@RequestBody Map<String,Object> loginUser) throws AuthException {
         Map<String,Object> ret = authService.login(loginUser);
         if(ret==null){
             return JsonResponse.BAD_REQUEST;
@@ -33,14 +37,11 @@ public class AuthController extends AutoLogController{
         return JsonResponse.success(ret);
     }
 
-    @PostMapping("/register")
+    @PutMapping("/register")
     public JsonResponse register(@RequestHeader("Authorization") String jwtToken, @RequestBody Map<String,String> registerUser)throws AuthException {
         return JsonResponse.success(authService.register(jwtToken, registerUser));
     }
 
-    @GetMapping("/test")
-    public JsonResponse test(){
-        return JsonResponse.success("success");
-    }
+
 
 }

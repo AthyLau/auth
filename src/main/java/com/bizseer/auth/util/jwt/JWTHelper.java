@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 public class JWTHelper {
-    private static final long EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7;
+    private static final long EXPIRATION_MS = 1000L * 60 * 60 * 24 * 7;
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final String HEADER_STRING = "Authorization";
     private static final String SECRET = "SI6IkpvaG4gRG9lIiwiYWRt";
@@ -28,7 +28,7 @@ public class JWTHelper {
         return parseUsernameFromToken(request.getHeader(HEADER_STRING));
     }
 
-    private static String generateToken(String username) {
+    public static String generateToken(String username) {
         // 生成用户、权限有效时间为2小时的jwttoken
         JwtBuilder jwtBuilder = Jwts.builder()
             .setSubject(username)

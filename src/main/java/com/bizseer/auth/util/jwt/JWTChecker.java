@@ -4,9 +4,9 @@ import com.bizseer.auth.constant.AuthRoleType;
 import com.bizseer.auth.constant.ConstAuth;
 import com.bizseer.auth.repository.AuthRepository;
 import com.bizseer.auth.service.AuthService;
+import com.bizseer.auth.util.exception.AuthException;
+import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -19,23 +19,18 @@ import java.io.IOException;
 
 @Component("JWTChecker")
 public class JWTChecker extends GenericFilterBean {
+    private static final String AUTH_HEADER_FIELD = "Authorization";
     @Autowired
     private AuthService authService;
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         // 请求的头部存在有效jwt，则向holder中加入一个authentication
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            chain.doFilter(request, response);
-            return;
+//        ModifyRequestHeaderWrapper requestHeaderWrapper = new ModifyRequestHeaderWrapper((HttpServletRequest) request);
+        String username = JWTHelper.parseUsernameFromRequest((HttpServletRequest) request);
+        if (Strings.isNullOrEmpty(username) && !((HttpServletRequest) request).getRequestURI().contains("/login")
+                && ((HttpServletRequest) request).getHeader(BackdoorChecker.AUTH_HEADER_FIELD).equals(BackdoorChecker.backdoorToken) ) {
+            throw new AuthException("Token is error! Please login!");
         }
-        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-
-        String username = JWTHelper.parseUsernameFromRequest(httpServletRequest);
-        // if jwt validate failed
-        AuthRoleType userAuthRole = AuthRoleType.getAuthRoleByName((String) authService.getUserOneInfoByUsername(ConstAuth.ROLE,username));
-        // 判断用户拥有访问url的权限
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(request, response);
     }
 

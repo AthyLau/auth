@@ -85,7 +85,7 @@ public class AuthService {
         }
         String username = (String) user.getOrDefault(ConstAuth.USERNAME, "");
         String passowrd = (String) user.getOrDefault(ConstAuth.PASSWORD, "");
-        String role = (String) user.getOrDefault(ConstAuth.ROLE, "");
+        String role = (String) user.getOrDefault(ConstAuth.ROLE, null);
         if (Strings.isNullOrEmpty(username) || Strings.isNullOrEmpty(passowrd)) {
             throw new AuthException("username and password can't be null");
         }
